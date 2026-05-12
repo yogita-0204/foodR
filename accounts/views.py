@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 
 from .forms import LoginForm, RegistrationForm, ShopOwnerRegistrationForm
+from .decorators import get_user_role, ROLE_COLLEGE_USER, ROLE_SHOP_OWNER
 from .models import Notification
 
 
@@ -59,19 +60,18 @@ class UserLoginView(LoginView):
         user = form.get_user()
         
         # Check if user has profile and is a college user
-        if hasattr(user, 'profile'):
-            if user.profile.role != 'college_user':
-                messages.error(
-                    self.request, 
-                    'Access denied. This login is for college users only. Shop owners should use the shop owner login.'
-                )
-                return self.form_invalid(form)
+        if get_user_role(user) not in (None, ROLE_COLLEGE_USER):
+            messages.error(
+                self.request,
+                'Access denied. This login is for college users only. Shop owners should use the shop owner login.'
+            )
+            return self.form_invalid(form)
         
         # If valid, proceed with login
         return super().form_valid(form)
     
     def get_success_url(self):
-        return "/orders/my/" if hasattr(self.request.user, 'profile') and self.request.user.profile.role == 'college_user' else "/"
+        return "/orders/my/" if get_user_role(self.request.user) == ROLE_COLLEGE_USER else "/"
 
 
 class ShopOwnerLoginView(LoginView):
@@ -84,16 +84,9 @@ class ShopOwnerLoginView(LoginView):
         user = form.get_user()
         
         # Check if user has profile and is a shop owner
-        if hasattr(user, 'profile'):
-            if user.profile.role != 'shop_owner':
-                messages.error(
-                    self.request, 
-                    'Access denied. This login is for shop owners only. College users should use the student login.'
-                )
-                return self.form_invalid(form)
-        else:
+        if get_user_role(user) != ROLE_SHOP_OWNER:
             messages.error(
-                self.request, 
+                self.request,
                 'Access denied. This account does not have shop owner privileges.'
             )
             return self.form_invalid(form)
@@ -102,7 +95,7 @@ class ShopOwnerLoginView(LoginView):
         return super().form_valid(form)
     
     def get_success_url(self):
-        return "/owner/dashboard/" if hasattr(self.request.user, 'profile') and self.request.user.profile.role == 'shop_owner' else "/"
+        return "/owner/dashboard/" if get_user_role(self.request.user) == ROLE_SHOP_OWNER else "/"
 
 
 # Keep for backward compatibility

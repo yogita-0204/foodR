@@ -33,6 +33,14 @@ def shop_detail(request, shop_id):
     shop = get_object_or_404(Shop, id=shop_id)
     items = MenuItem.objects.filter(shop=shop, is_available=True).select_related("category")
     
+    # Get categories for this shop that have available items
+    categories = Category.objects.filter(shop=shop, menuitem__is_available=True).distinct().order_by("name")
+    
+    # Filter by category if requested
+    selected_category = request.GET.get('category', '')
+    if selected_category:
+        items = items.filter(category_id=selected_category)
+    
     # Get cart items count
     cart = request.session.get("cart_items", {})
     cart_items_count = 0
@@ -42,7 +50,13 @@ def shop_detail(request, shop_id):
         except (TypeError, ValueError):
             continue
     
-    return render(request, "shops/shop_detail.html", {"shop": shop, "items": items, "cart_items_count": cart_items_count})
+    return render(request, "shops/shop_detail.html", {
+        "shop": shop,
+        "items": items,
+        "cart_items_count": cart_items_count,
+        "categories": categories,
+        "selected_category": selected_category,
+    })
 
 
 def search_menu(request):

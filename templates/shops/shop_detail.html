@@ -17,7 +17,23 @@
         <span class="bg-slate-100 px-3 py-1 rounded-full">{{ shop.max_orders_per_slot }} orders / slot</span>
     </div>
 </div>
-<div class="grid md:grid-cols-4 gap-6">
+
+<!-- Category Filter -->
+<div class="mb-6 flex flex-wrap gap-2 items-center">
+    <span class="text-sm font-semibold text-slate-600 mr-1">Filter:</span>
+    <a href="{% url 'shops:detail' shop.id %}"
+       class="px-4 py-1.5 rounded-full text-sm font-medium border transition {% if not selected_category %}bg-slate-900 text-white border-slate-900{% else %}bg-white text-slate-700 border-slate-300 hover:border-slate-500{% endif %}">
+        All
+    </a>
+    {% for cat in categories %}
+        <a href="{% url 'shops:detail' shop.id %}?category={{ cat.id }}"
+           class="px-4 py-1.5 rounded-full text-sm font-medium border transition {% if selected_category == cat.id|stringformat:'d' %}bg-slate-900 text-white border-slate-900{% else %}bg-white text-slate-700 border-slate-300 hover:border-slate-500{% endif %}">
+            {{ cat.name }}
+        </a>
+    {% endfor %}
+</div>
+
+<div class="grid md:grid-cols-3 gap-6">
     {% for item in items %}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
             {% if item.image %}

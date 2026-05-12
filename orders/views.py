@@ -6,7 +6,14 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from accounts.decorators import college_user_required, shop_owner_required
+from accounts.decorators import (
+    ROLE_COLLEGE_USER,
+    ROLE_SHOP_OWNER,
+    college_user_required,
+    get_user_role,
+    role_required,
+    shop_owner_required,
+)
 from accounts.models import Notification
 from accounts.utils import create_notification
 from menu.models import MenuItem
@@ -380,17 +387,13 @@ def submit_feedback(request, order_id):
 
 
 @login_required
+@role_required([ROLE_COLLEGE_USER, ROLE_SHOP_OWNER])
 def feedback_list(request):
     """View all feedbacks (for shop owners - their shop, for users - their feedbacks)"""
-    if hasattr(request.user, "profile"):
-        if request.user.profile.role == "shop_owner":
-            # Shop owner sees feedbacks for their shop
-            shop = get_object_or_404(Shop, owner=request.user)
-            feedbacks = Feedback.objects.filter(shop=shop).select_related("user", "order")
-        else:
-            # College users see their own feedbacks
-            feedbacks = Feedback.objects.filter(user=request.user).select_related("shop", "order")
+    if request.user.is_superuser or request.user.is_staff or get_user_role(request.user) == ROLE_SHOP_OWNER:
+        shop = get_object_or_404(Shop, owner=request.user)
+        feedbacks = Feedback.objects.filter(shop=shop).select_related("user", "order")
     else:
-        feedbacks = Feedback.objects.none()
+        feedbacks = Feedback.objects.filter(user=request.user).select_related("shop", "order")
     
     return render(request, "orders/feedback_list.html", {"feedbacks": feedbacks})
