@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key-foodr-production-fallback-key-2026")
 
-DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
+DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 
 # Production Host & Domain Configuration (Allow all hosts to prevent 400 Bad Request)
 ALLOWED_HOSTS = ["*"]

@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import traceback
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -22,16 +23,18 @@ if not tmp_db.exists() or tmp_db.stat().st_size == 0:
 import django
 django.setup()
 
-# Auto-migrate if db still doesn't exist
-if not tmp_db.exists() or tmp_db.stat().st_size == 0:
-    try:
-        from django.core.management import call_command
-        call_command("migrate", "--noinput")
-    except Exception as e:
-        print(f"Migration error: {e}")
-
 from django.core.wsgi import get_wsgi_application
 
-application = get_wsgi_application()
+django_app = get_wsgi_application()
+
+def application(environ, start_response):
+    try:
+        return django_app(environ, start_response)
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"WSGI Handler Error: {tb}")
+        start_response('500 Internal Server Error', [('Content-Type', 'text/plain; charset=utf-8')])
+        return [f"WSGI Internal Server Error:\n{tb}".encode('utf-8')]
+
 app = application
 handler = application
