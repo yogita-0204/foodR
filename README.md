@@ -3,7 +3,7 @@
 # 🛒 foodR
 ### Next-Gen Campus Food Pre-Ordering & Crowd Management Platform
 
-*A Django-based full-stack web application that allows college users to pre-order food and schedule pickup times, helping shops reduce crowd and manage orders efficiently through time-slot control.*
+*Eliminate cafeteria rush hours, optimize kitchen throughput, and empower campus vendors with real-time analytics.*
 
 <br/>
 
@@ -24,7 +24,7 @@
 
 ## 📌 Table of Contents
 
-- [About & Overview](#-about--overview)
+- [Overview](#-overview)
 - [Key Features](#-key-features)
 - [System Architecture](#-system-architecture)
 - [Tech Stack](#-tech-stack)
@@ -41,11 +41,7 @@
 
 ---
 
-## 🌟 About & Overview
-
-> **A Django-based full-stack web application that allows college users to pre-order food and schedule pickup times, helping shops reduce crowd and manage orders efficiently through time-slot control. Built with Django and Tailwind CSS.**
->
-> 🚀 **Live Production URL:** [https://food-r-rouge.vercel.app/](https://food-r-rouge.vercel.app/)
+## 🌟 Overview
 
 **foodR** is an end-to-end digital cafeteria ecosystem engineered to bridge college communities and on-campus food vendors. By enabling scheduled time-slot ordering, dynamic crowd throttling, and vendor-side order dispatching, foodR transforms chaotic lunch breaks into frictionless, zero-queue pickup experiences.
 
