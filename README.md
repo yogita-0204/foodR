@@ -3,7 +3,7 @@
 # 🛒 foodR
 ### Next-Gen Campus Food Pre-Ordering & Crowd Management Platform
 
-*Eliminate cafeteria rush hours, optimize kitchen throughput, and empower campus vendors with real-time analytics.*
+*A Django-based full-stack web application that allows college users to pre-order food and schedule pickup times, helping shops reduce crowd and manage orders efficiently through time-slot control.*
 
 <br/>
 
@@ -11,12 +11,12 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://food-r-rouge.vercel.app/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Vercel](https://img.shields.io/badge/Vercel-Live%20Demo-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://food-r-rouge.vercel.app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
 <br/>
 
-[🌐 **Live Demo**](https://food-r-rouge.vercel.app/) • [📖 **Developer Guide**](DEVELOPER_GUIDE.md) • [🛠️ **Admin Setup**](ADMIN_SETUP_GUIDE.md) • [🎨 **Theme Specs**](THEME_DOCUMENTATION.md) • [📋 **SRS Document**](docs/SRS.md)
+[🌐 **Explore Live Demo**](https://food-r-rouge.vercel.app/) • [📖 **Developer Guide**](DEVELOPER_GUIDE.md) • [🛠️ **Admin Setup**](ADMIN_SETUP_GUIDE.md) • [🎨 **Theme Specs**](THEME_DOCUMENTATION.md) • [📋 **SRS Document**](docs/SRS.md)
 
 </div>
 
@@ -24,7 +24,7 @@
 
 ## 📌 Table of Contents
 
-- [Overview](#-overview)
+- [About & Overview](#-about--overview)
 - [Key Features](#-key-features)
 - [System Architecture](#-system-architecture)
 - [Tech Stack](#-tech-stack)
@@ -41,11 +41,15 @@
 
 ---
 
-## 🌟 Overview
+## 🌟 About & Overview
+
+> **A Django-based full-stack web application that allows college users to pre-order food and schedule pickup times, helping shops reduce crowd and manage orders efficiently through time-slot control. Built with Django and Tailwind CSS.**
+>
+> 🚀 **Live Production URL:** [https://food-r-rouge.vercel.app/](https://food-r-rouge.vercel.app/)
 
 **foodR** is an end-to-end digital cafeteria ecosystem engineered to bridge college communities and on-campus food vendors. By enabling scheduled time-slot ordering, dynamic crowd throttling, and vendor-side order dispatching, foodR transforms chaotic lunch breaks into frictionless, zero-queue pickup experiences.
 
-Built with **Django 5**, the platform offers role-specific interfaces for students, staff, shop owners, and system administrators, packed with real-time updates and an adaptive light/dark glassmorphic UI.
+Built with **Django 5** and **Tailwind CSS**, the platform offers role-specific interfaces for students, staff, shop owners, and system administrators, packed with real-time updates and an adaptive light/dark glassmorphic UI.
 
 ---
 
@@ -159,6 +163,7 @@ foodR/
 ├── ADMIN_SETUP_GUIDE.md    # Guide for seeding test data and configuring shops
 ├── CODE_EXPLANATION.md     # In-depth architectural & codebase breakdown
 ├── DEVELOPER_GUIDE.md      # Detailed developer documentation
+├── LICENSE                 # MIT Open Source License
 ├── PROJECT_REVIEW.md       # Quality audit, fixes, & verification log
 ├── THEME_DOCUMENTATION.md  # CSS custom properties & component system
 ├── manage.py               # Django CLI management script
@@ -282,7 +287,7 @@ Contributions make the open-source community an incredible place to learn, inspi
 
 ## 📄 License
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+Distributed under the **MIT License**. See [LICENSE](LICENSE) for full details.
 
 <br/>
 
