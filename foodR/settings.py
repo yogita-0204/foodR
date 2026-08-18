@@ -4,11 +4,30 @@ import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key-foodr-production-fallback-key-2026")
 
-DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
 
-ALLOWED_HOSTS = [host for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if host]
+# Production Host & Domain Configuration
+ALLOWED_HOSTS = ["*", ".vercel.app", "localhost", "127.0.0.1", "[::1]"]
+extra_hosts = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
+if extra_hosts:
+    ALLOWED_HOSTS.extend(extra_hosts)
+
+# CSRF Trusted Origins for HTTPS on Vercel
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.vercel.app",
+    "https://*.now.sh",
+    "https://food-r-rouge.vercel.app",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+extra_csrf = [c.strip() for c in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if c.strip()]
+if extra_csrf:
+    CSRF_TRUSTED_ORIGINS.extend(extra_csrf)
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -33,7 +52,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
 ]
 
 ROOT_URLCONF = "foodR.urls"
@@ -57,10 +75,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "foodR.wsgi.application"
 
+# Database Configuration (supports /tmp on Vercel Serverless)
+IS_VERCEL = bool(os.getenv("VERCEL") or os.getenv("VERCEL_URL"))
+
+if IS_VERCEL:
+    db_path = Path("/tmp/db.sqlite3")
+else:
+    db_path = BASE_DIR / "db.sqlite3"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": db_path,
     }
 }
 
@@ -69,40 +95,36 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
+# Static Files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"  # For production deployment
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 # Media files (user uploads)
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ===== AUTHENTICATION & AUTHORIZATION SETTINGS =====
-
-# Login/Logout URLs
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "shops:list"
 LOGOUT_REDIRECT_URL = "shops:list"
 
 # Session Security
-SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
-SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
-SESSION_COOKIE_SECURE = not DEBUG  # Use HTTPS in production
-SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
-SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session after browser close
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # CSRF Security
-CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SECURE = not DEBUG  # Use HTTPS in production
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Allows JS interactions if needed
+CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_USE_SESSIONS = False
-CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
 
-# Password Validation - Enhanced
+# Password Validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -110,8 +132,8 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
         "OPTIONS": {
-            "min_length": 8,  # Minimum 8 characters
-        }
+            "min_length": 8,
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -122,36 +144,24 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Security Headers
-SECURE_BROWSER_XSS_FILTER = True  # X-XSS-Protection header
-SECURE_CONTENT_TYPE_NOSNIFF = True  # X-Content-Type-Options header
-X_FRAME_OPTIONS = 'DENY'  # Clickjacking protection
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
 
-# Production Security Settings (Enable when DEBUG=False)
 RUNNING_TESTS = "test" in sys.argv
 
 if not DEBUG and not RUNNING_TESTS:
-    SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    # Vercel handles HTTPS termination at edge; avoid internal redirect loop
+    SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
 # Email Configuration for Password Reset
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Development: prints to console
-# For production, use SMTP:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-# DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@shopapp.com')
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Login Attempt Limits
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5  # Custom setting
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300  # 5 minutes lockout
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
 
 # Password Reset Token Validity
-PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
-
+PASSWORD_RESET_TIMEOUT = 3600
