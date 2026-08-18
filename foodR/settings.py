@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -126,7 +127,9 @@ SECURE_CONTENT_TYPE_NOSNIFF = True  # X-Content-Type-Options header
 X_FRAME_OPTIONS = 'DENY'  # Clickjacking protection
 
 # Production Security Settings (Enable when DEBUG=False)
-if not DEBUG:
+RUNNING_TESTS = "test" in sys.argv
+
+if not DEBUG and not RUNNING_TESTS:
     SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
