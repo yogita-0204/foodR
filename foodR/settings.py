@@ -8,8 +8,8 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key-foodr-production-fal
 
 DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
 
-# Production Host & Domain Configuration
-ALLOWED_HOSTS = ["*", ".vercel.app", "localhost", "127.0.0.1", "[::1]"]
+# Production Host & Domain Configuration (Allow all hosts to prevent 400 Bad Request)
+ALLOWED_HOSTS = ["*"]
 extra_hosts = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
 if extra_hosts:
     ALLOWED_HOSTS.extend(extra_hosts)
@@ -27,7 +27,7 @@ if extra_csrf:
     CSRF_TRUSTED_ORIGINS.extend(extra_csrf)
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_HOST = False
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -75,7 +75,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "foodR.wsgi.application"
 
-# Database Configuration (supports /tmp on Vercel Serverless)
+# Database Configuration (supports writable /tmp on Vercel Serverless)
 IS_VERCEL = bool(os.getenv("VERCEL") or os.getenv("VERCEL_URL"))
 
 if IS_VERCEL:
@@ -120,7 +120,7 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # CSRF Security
-CSRF_COOKIE_HTTPONLY = False  # Allows JS interactions if needed
+CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_USE_SESSIONS = False
 
@@ -151,7 +151,6 @@ X_FRAME_OPTIONS = "DENY"
 RUNNING_TESTS = "test" in sys.argv
 
 if not DEBUG and not RUNNING_TESTS:
-    # Vercel handles HTTPS termination at edge; avoid internal redirect loop
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
