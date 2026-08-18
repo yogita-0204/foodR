@@ -15,7 +15,7 @@ from accounts.decorators import (
     shop_owner_required,
 )
 from accounts.models import Notification
-from accounts.utils import create_notification
+from accounts.utils import create_notification, get_or_create_wallet
 from menu.models import MenuItem
 from payments.models import Payment
 from shops.models import Shop
@@ -129,18 +129,19 @@ def checkout(request):
     shop_id = request.session.get(CART_SHOP_KEY)
     shop = get_object_or_404(Shop, id=shop_id)
     form = PickupTimeForm(request.POST or None)
+    wallet = get_or_create_wallet(getattr(request.user, "profile", None))
 
     if request.method == "POST" and form.is_valid():
         pickup_time = round_to_quarter_hour(form.cleaned_data["pickup_time"])
         if timezone.is_naive(pickup_time):
             pickup_time = timezone.make_aware(pickup_time, timezone.get_current_timezone())
-        payment_method = form.cleaned_data["payment_method"]
+        payment_method = Payment.METHOD_WALLET
 
         is_valid, error_message = validate_pickup_time(shop, pickup_time)
         if not is_valid:
             messages.error(request, error_message)
             payment_config = getattr(shop, "payment_config", None)
-            return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config})
+            return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config, "wallet": wallet})
 
         has_pending = Order.objects.filter(
             user=request.user,
@@ -150,10 +151,11 @@ def checkout(request):
         if has_pending:
             messages.error(request, "You already have a pending order for this shop.")
             payment_config = getattr(shop, "payment_config", None)
-            return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config})
+            return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config, "wallet": wallet})
 
         validated_items = []
         invalid_items = []
+        order_total = Decimal("0.00")
         for item_id, quantity in cart.items():
             try:
                 quantity = int(quantity)
@@ -166,33 +168,41 @@ def checkout(request):
                 invalid_items.append(item_id)
                 continue
             validated_items.append((menu_item, quantity))
+            order_total += menu_item.price * quantity
 
         if invalid_items:
             messages.error(request, "Some items in your cart are no longer available. Please review your cart.")
             return redirect("orders:cart")
 
+        if not wallet:
+            messages.error(request, "Wallet is not available for this account.")
+            payment_config = getattr(shop, "payment_config", None)
+            return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config, "wallet": wallet})
+
+        if wallet.balance < order_total:
+            messages.error(request, f"Insufficient wallet balance. You need ₹{order_total} to place this order.")
+            payment_config = getattr(shop, "payment_config", None)
+            return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config, "wallet": wallet})
+
         try:
             with transaction.atomic():
                 order = Order.objects.create(user=request.user, shop=shop, pickup_time=pickup_time)
-                total = Decimal("0.00")
                 for menu_item, quantity in validated_items:
-                    line_total = menu_item.price * quantity
-                    total += line_total
                     OrderItem.objects.create(
                         order=order,
                         menu_item=menu_item,
                         quantity=quantity,
                         price=menu_item.price,
                     )
-                order.total_price = total
+                order.total_price = order_total
                 order.save(update_fields=["total_price"])
+
+                wallet.debit_amount(order_total)
 
                 Payment.objects.create(
                     order=order,
                     payment_method=payment_method,
-                    payment_status=(
-                        Payment.STATUS_PENDING if payment_method == Payment.METHOD_ONLINE else Payment.STATUS_PAID
-                    ),
+                    payment_status=Payment.STATUS_PAID,
                 )
                 
                 # Notify shop owner of new order
@@ -207,7 +217,7 @@ def checkout(request):
         except IntegrityError:
             messages.error(request, "You already have a pending order for this shop.")
             payment_config = getattr(shop, "payment_config", None)
-            return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config})
+            return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config, "wallet": wallet})
 
         request.session.pop(CART_SESSION_KEY, None)
         request.session.pop(CART_SHOP_KEY, None)
@@ -215,7 +225,7 @@ def checkout(request):
         return redirect("orders:list")
 
     payment_config = getattr(shop, "payment_config", None)
-    return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config})
+    return render(request, "orders/checkout.html", {"form": form, "shop": shop, "payment_config": payment_config, "wallet": wallet})
 
 
 @login_required
@@ -241,6 +251,10 @@ def cancel_order(request, order_id):
     if order.status == Order.STATUS_PENDING:
         order.status = Order.STATUS_CANCELLED
         order.save(update_fields=["status"])
+
+        wallet = get_or_create_wallet(getattr(order.user, "profile", None))
+        if wallet:
+            wallet.credit_amount(order.total_price)
         
         # Notify shop owner of cancellation
         create_notification(
@@ -317,6 +331,11 @@ def update_status(request, order_id):
             old_status = order.status
             order.status = new_status
             order.save(update_fields=["status"])
+
+            if new_status == Order.STATUS_COLLECTED:
+                wallet = get_or_create_wallet(getattr(order.user, "profile", None))
+                if wallet:
+                    wallet.release_amount(COD_WALLET_HOLD)
             
             # Notify user of status change
             status_messages = {

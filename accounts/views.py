@@ -5,9 +5,10 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
 
-from .forms import LoginForm, RegistrationForm, ShopOwnerRegistrationForm
+from .forms import LoginForm, RegistrationForm, ShopOwnerRegistrationForm, WalletTopUpForm
 from .decorators import get_user_role, ROLE_COLLEGE_USER, ROLE_SHOP_OWNER
-from .models import Notification
+from .models import Notification, WalletTopUp
+from .utils import get_or_create_wallet
 
 
 def logout_view(request):
@@ -148,10 +149,33 @@ def get_unread_count(request):
 def profile_view(request):
     """View and edit user profile"""
     profile = getattr(request.user, 'profile', None)
+    wallet = get_or_create_wallet(profile)
+    top_up_form = WalletTopUpForm(request.POST or None)
+
+    if request.method == "POST" and top_up_form.is_valid():
+        if not wallet:
+            messages.error(request, "Wallet is not available for this account.")
+        else:
+            amount = top_up_form.cleaned_data["amount"]
+            payment_source = top_up_form.cleaned_data["payment_source"]
+            upi_id = top_up_form.cleaned_data.get("upi_id", "")
+            reference_id = top_up_form.cleaned_data.get("reference_id", "")
+            WalletTopUp.objects.create(
+                wallet=wallet,
+                amount=amount,
+                payment_source=payment_source,
+                upi_id=upi_id or None,
+                reference_id=reference_id or None,
+            )
+            wallet.credit_amount(amount)
+            messages.success(request, f"₹{amount} added to your wallet via {top_up_form.cleaned_data['payment_source'].replace('_', ' ').title()}.")
+            return redirect("accounts:profile")
     
     return render(request, "accounts/profile.html", {
         "user": request.user,
-        "profile": profile
+        "profile": profile,
+        "wallet": wallet,
+        "top_up_form": top_up_form,
     })
 
 

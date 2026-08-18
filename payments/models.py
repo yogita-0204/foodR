@@ -23,6 +23,7 @@ class PaymentConfig(models.Model):
 
 
 class Payment(models.Model):
+    METHOD_WALLET = "wallet"
     METHOD_CASH = "cash"
     METHOD_ONLINE = "online"
 
@@ -30,6 +31,7 @@ class Payment(models.Model):
     STATUS_PAID = "paid"
 
     METHOD_CHOICES = [
+        (METHOD_WALLET, "Wallet"),
         (METHOD_CASH, "Cash"),
         (METHOD_ONLINE, "Online"),
     ]

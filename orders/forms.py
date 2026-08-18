@@ -1,6 +1,5 @@
 from django import forms
 
-from payments.models import Payment
 from .models import Feedback
 
 
@@ -9,7 +8,6 @@ class PickupTimeForm(forms.Form):
         widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
         input_formats=["%Y-%m-%dT%H:%M"],
     )
-    payment_method = forms.ChoiceField(choices=Payment.METHOD_CHOICES)
 
 
 class ExtendPickupTimeForm(forms.Form):

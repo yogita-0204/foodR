@@ -155,8 +155,13 @@ class ShopAnalyticsService:
         payment_data = []
         for stat in payment_stats:
             percentage = (stat['count'] / total_payments * 100) if total_payments > 0 else 0
+            method_labels = {
+                'wallet': 'Wallet Payment',
+                'cash': 'Cash on Pickup',
+                'online': 'Online Payment',
+            }
             payment_data.append({
-                'method': 'Cash on Pickup' if stat['payment_method'] == 'cash' else 'Online Payment',
+                'method': method_labels.get(stat['payment_method'], stat['payment_method'].title()),
                 'method_code': stat['payment_method'],
                 'count': stat['count'],
                 'percentage': round(percentage, 2),

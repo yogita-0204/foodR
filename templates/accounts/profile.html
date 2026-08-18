@@ -3,15 +3,12 @@
 {% block content %}
 <div class="max-w-4xl mx-auto py-8 px-4">
     <div class="bg-white rounded-2xl shadow-lg border border-slate-200">
-        <!-- Profile Header -->
         <div class="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-8 py-6 rounded-t-2xl">
             <h1 class="text-3xl font-bold">My Profile</h1>
             <p class="mt-1 text-teal-100">Manage your account information and settings</p>
         </div>
-        
-        <!-- Profile Content -->
+
         <div class="p-8">
-            <!-- User Information -->
             <div class="mb-8">
                 <h2 class="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,36 +16,52 @@
                     </svg>
                     Account Information
                 </h2>
-                
+
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="border border-slate-200 rounded-lg p-4">
                         <p class="text-sm text-slate-600 mb-1">Username</p>
                         <p class="text-lg font-semibold text-slate-900">{{ user.username }}</p>
                     </div>
-                    
+
                     <div class="border border-slate-200 rounded-lg p-4">
                         <p class="text-sm text-slate-600 mb-1">Email</p>
                         <p class="text-lg font-semibold text-slate-900">{{ user.email|default:"Not set" }}</p>
                     </div>
-                    
+
                     {% if profile %}
                         <div class="border border-slate-200 rounded-lg p-4">
                             <p class="text-sm text-slate-600 mb-1">Account Type</p>
                             <p class="text-lg font-semibold text-slate-900">
                                 {% if profile.role == 'shop_owner' %}
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800">
-                                        🏪 Shop Owner
-                                    </span>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800">🏪 Shop Owner</span>
                                 {% elif profile.role == 'college_user' %}
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                                        🎓 College User
-                                    </span>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">🎓 College User</span>
                                 {% else %}
                                     {{ profile.role|title }}
                                 {% endif %}
                             </p>
                         </div>
-                        
+
+                        {% if profile.role == 'college_user' and wallet %}
+                            <div class="border border-slate-200 rounded-2xl p-5 md:col-span-2 bg-slate-50/80">
+                                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <p class="text-sm text-slate-600 mb-1">Wallet Balance</p>
+                                        <p class="text-3xl font-bold text-emerald-700">₹{{ wallet.available_balance }}</p>
+                                        <p class="text-sm text-slate-500 mt-1">Use this balance to pay for orders.</p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        id="open-wallet-modal"
+                                        class="inline-flex items-center justify-center rounded-full bg-teal-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700"
+                                    >
+                                        Add Money
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+
                         {% if profile.role == 'college_user' and profile.college_name %}
                             <div class="border border-slate-200 rounded-lg p-4">
                                 <p class="text-sm text-slate-600 mb-1">College</p>
@@ -56,20 +69,19 @@
                             </div>
                         {% endif %}
                     {% endif %}
-                    
+
                     <div class="border border-slate-200 rounded-lg p-4">
                         <p class="text-sm text-slate-600 mb-1">Member Since</p>
                         <p class="text-lg font-semibold text-slate-900">{{ user.date_joined|date:"F d, Y" }}</p>
                     </div>
-                    
+
                     <div class="border border-slate-200 rounded-lg p-4">
                         <p class="text-sm text-slate-600 mb-1">Last Login</p>
                         <p class="text-lg font-semibold text-slate-900">{{ user.last_login|date:"F d, Y g:i A"|default:"Never" }}</p>
                     </div>
                 </div>
             </div>
-            
-            <!-- Security Section -->
+
             <div class="border-t border-slate-200 pt-8 mb-8">
                 <h2 class="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,10 +89,9 @@
                     </svg>
                     Security Settings
                 </h2>
-                
+
                 <div class="space-y-4">
-                    <a href="{% url 'accounts:change_password' %}" 
-                       class="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors group">
+                    <a href="{% url 'accounts:change_password' %}" class="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors group">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
                                 <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,8 +109,7 @@
                     </a>
                 </div>
             </div>
-            
-            <!-- Quick Actions -->
+
             <div class="border-t border-slate-200 pt-8">
                 <h2 class="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,33 +117,29 @@
                     </svg>
                     Quick Actions
                 </h2>
-                
+
                 <div class="grid md:grid-cols-3 gap-4">
-                    <a href="{% url 'accounts:notifications' %}" 
-                       class="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-center">
+                    <a href="{% url 'accounts:notifications' %}" class="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-center">
                         <div class="text-3xl mb-2">🔔</div>
                         <p class="font-semibold text-slate-900">Notifications</p>
                         <p class="text-sm text-slate-600">View all notifications</p>
                     </a>
-                    
+
                     {% if profile.role == 'college_user' %}
-                        <a href="{% url 'orders:list' %}" 
-                           class="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-center">
+                        <a href="{% url 'orders:list' %}" class="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-center">
                             <div class="text-3xl mb-2">📦</div>
                             <p class="font-semibold text-slate-900">My Orders</p>
                             <p class="text-sm text-slate-600">View order history</p>
                         </a>
                     {% elif profile.role == 'shop_owner' %}
-                        <a href="{% url 'shops:owner_dashboard' %}" 
-                           class="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-center">
+                        <a href="{% url 'shops:owner_dashboard' %}" class="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-center">
                             <div class="text-3xl mb-2">🏪</div>
                             <p class="font-semibold text-slate-900">Dashboard</p>
                             <p class="text-sm text-slate-600">Manage your shop</p>
                         </a>
                     {% endif %}
-                    
-                    <a href="{% url 'accounts:logout' %}" 
-                       class="p-4 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-center">
+
+                    <a href="{% url 'accounts:logout' %}" class="p-4 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-center">
                         <div class="text-3xl mb-2">🚪</div>
                         <p class="font-semibold text-red-700">Logout</p>
                         <p class="text-sm text-red-600">Sign out of your account</p>
@@ -143,4 +149,118 @@
         </div>
     </div>
 </div>
+
+{% if profile.role == 'college_user' and wallet %}
+<div id="wallet-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/50 px-4">
+    <div class="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.25em] text-teal-600">Wallet Top Up</p>
+                <h3 class="mt-1 text-2xl font-semibold text-slate-900">Add money to your wallet</h3>
+            </div>
+            <button type="button" id="close-wallet-modal" class="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" aria-label="Close">✕</button>
+        </div>
+
+        <form method="post" class="mt-5 space-y-5">
+            {% csrf_token %}
+
+            {% if top_up_form.errors %}
+                <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    Please correct the highlighted fields and try again.
+                </div>
+            {% endif %}
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-2 block text-sm font-medium text-slate-700" for="{{ top_up_form.payment_source.id_for_label }}">Pay with</label>
+                    {{ top_up_form.payment_source }}
+                    {% if top_up_form.payment_source.errors %}
+                        <p class="mt-1 text-xs text-rose-600">{{ top_up_form.payment_source.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="mb-2 block text-sm font-medium text-slate-700" for="{{ top_up_form.amount.id_for_label }}">Amount</label>
+                    {{ top_up_form.amount }}
+                    {% if top_up_form.amount.errors %}
+                        <p class="mt-1 text-xs text-rose-600">{{ top_up_form.amount.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-medium text-slate-700" for="{{ top_up_form.upi_id.id_for_label }}">UPI ID</label>
+                {{ top_up_form.upi_id }}
+                <p class="mt-1 text-xs text-slate-500">Required only for Other UPI App.</p>
+                {% if top_up_form.upi_id.errors %}
+                    <p class="mt-1 text-xs text-rose-600">{{ top_up_form.upi_id.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div class="rounded-2xl bg-slate-50 p-4">
+                <details>
+                    <summary class="cursor-pointer text-sm font-semibold text-slate-700">More details</summary>
+                    <div class="mt-4">
+                        <label class="mb-2 block text-sm font-medium text-slate-700" for="{{ top_up_form.reference_id.id_for_label }}">Reference ID</label>
+                        {{ top_up_form.reference_id }}
+                        {% if top_up_form.reference_id.errors %}
+                            <p class="mt-1 text-xs text-rose-600">{{ top_up_form.reference_id.errors|striptags }}</p>
+                        {% endif %}
+                    </div>
+                </details>
+            </div>
+
+            <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button type="button" id="cancel-wallet-modal" class="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="rounded-full bg-teal-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700">Add Money</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const modal = document.getElementById('wallet-modal');
+        const openButton = document.getElementById('open-wallet-modal');
+        const closeButton = document.getElementById('close-wallet-modal');
+        const cancelButton = document.getElementById('cancel-wallet-modal');
+
+        if (!modal || !openButton) {
+            return;
+        }
+
+        const openModal = () => {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        openButton.addEventListener('click', openModal);
+        closeButton?.addEventListener('click', closeModal);
+        cancelButton?.addEventListener('click', closeModal);
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        const paymentSource = modal.querySelector('[name="payment_source"]');
+        const upiField = modal.querySelector('[name="upi_id"]');
+        const updateUpiRequirement = () => {
+            if (!paymentSource || !upiField) return;
+            upiField.required = paymentSource.value === 'other';
+        };
+
+        paymentSource?.addEventListener('change', updateUpiRequirement);
+        updateUpiRequirement();
+
+        if ({{ top_up_form.errors|yesno:"true,false" }}) {
+            openModal();
+        }
+    })();
+</script>
+{% endif %}
 {% endblock %}

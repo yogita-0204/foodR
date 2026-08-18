@@ -1,4 +1,4 @@
-from .models import Notification
+from .models import Notification, Profile, Wallet
 
 
 def create_notification(user, notification_type, title, message, link=None):
@@ -23,3 +23,14 @@ def create_notification(user, notification_type, title, message, link=None):
         link=link
     )
     return notification
+
+
+def get_or_create_wallet(profile):
+    if not profile or profile.role != Profile.ROLE_COLLEGE_USER:
+        return None
+
+    wallet, _ = Wallet.objects.get_or_create(
+        profile=profile,
+        defaults={"balance": 0},
+    )
+    return wallet

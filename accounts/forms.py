@@ -112,3 +112,56 @@ class ShopOwnerRegistrationForm(forms.Form):
 
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(label="Email")
+
+
+class WalletTopUpForm(forms.Form):
+    payment_source = forms.ChoiceField(
+        choices=[
+            ("phonepe", "PhonePe"),
+            ("paytm", "Paytm"),
+            ("google_pay", "Google Pay"),
+            ("other", "Other UPI App"),
+        ],
+        label="Payment App",
+        widget=forms.Select(attrs={
+            "class": "w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500",
+        }),
+    )
+    amount = forms.DecimalField(
+        min_value=1,
+        max_digits=10,
+        decimal_places=2,
+        label="Add Money",
+        widget=forms.NumberInput(attrs={
+            "step": "0.01",
+            "min": "1",
+            "class": "w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500",
+        }),
+        help_text="Enter the amount you want to add to your wallet.",
+    )
+    upi_id = forms.CharField(
+        max_length=100,
+        required=False,
+        label="Your UPI ID",
+        help_text="Optional, but recommended if you use a custom UPI app.",
+        widget=forms.TextInput(attrs={
+            "placeholder": "name@upi",
+            "class": "w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500",
+        }),
+    )
+    reference_id = forms.CharField(
+        max_length=100,
+        required=False,
+        label="Payment Reference ID",
+        help_text="Optional transaction reference from the payment app.",
+        widget=forms.TextInput(attrs={
+            "placeholder": "UTR / Txn ID",
+            "class": "w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500",
+        }),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get("payment_source") == "other" and not cleaned_data.get("upi_id"):
+            self.add_error("upi_id", "UPI ID is required when you choose Other UPI App.")
+        return cleaned_data

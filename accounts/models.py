@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from decimal import Decimal
 
 
 class Profile(models.Model):
@@ -25,6 +26,80 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
+
+
+class Wallet(models.Model):
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="wallet")
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    held_balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def available_balance(self):
+        return self.balance - self.held_balance
+
+    def hold_amount(self, amount):
+        amount = Decimal(str(amount))
+        if amount <= 0:
+            return
+        if self.available_balance < amount:
+            raise ValidationError("Insufficient wallet balance.")
+        self.held_balance += amount
+        self.save(update_fields=["held_balance", "updated_at"])
+
+    def debit_amount(self, amount):
+        amount = Decimal(str(amount))
+        if amount <= 0:
+            return
+        if self.balance < amount:
+            raise ValidationError("Insufficient wallet balance.")
+        self.balance -= amount
+        self.save(update_fields=["balance", "updated_at"])
+
+    def credit_amount(self, amount):
+        amount = Decimal(str(amount))
+        if amount <= 0:
+            return
+        self.balance += amount
+        self.save(update_fields=["balance", "updated_at"])
+
+    def release_amount(self, amount):
+        amount = Decimal(str(amount))
+        if amount <= 0:
+            return
+        self.held_balance = max(Decimal("0.00"), self.held_balance - amount)
+        self.save(update_fields=["held_balance", "updated_at"])
+
+    def __str__(self):
+        return f"Wallet - {self.profile.user.username}"
+
+
+class WalletTopUp(models.Model):
+    SOURCE_PHONEPE = "phonepe"
+    SOURCE_PAYTM = "paytm"
+    SOURCE_GOOGLE_PAY = "google_pay"
+    SOURCE_OTHER = "other"
+
+    SOURCE_CHOICES = [
+        (SOURCE_PHONEPE, "PhonePe"),
+        (SOURCE_PAYTM, "Paytm"),
+        (SOURCE_GOOGLE_PAY, "Google Pay"),
+        (SOURCE_OTHER, "Other UPI App"),
+    ]
+
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name="topups")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_source = models.CharField(max_length=20, choices=SOURCE_CHOICES)
+    upi_id = models.CharField(max_length=100, blank=True, null=True)
+    reference_id = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Top-up ₹{self.amount} via {self.get_payment_source_display()}"
 
 
 class Notification(models.Model):
